@@ -113,7 +113,7 @@ export const AICompanion: React.FC<AICompanionProps> = ({ story }) => {
   );
 
   return (
-    <section className="py-24 px-4 bg-white relative">
+    <section id="study" className="py-24 px-4 bg-white relative scroll-mt-20">
       
       {/* Visualization Modal */}
       {visualization && (

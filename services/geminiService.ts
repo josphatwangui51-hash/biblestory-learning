@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { QuizQuestion } from "../types";
 
 // Helper to get AI instance with latest key from environment
@@ -41,7 +41,7 @@ export const generateSpeech = async (text: string): Promise<string | null> => {
       model: "gemini-2.5-flash-preview-tts",
       contents: { parts: [{ text }] },
       config: {
-        responseModalities: ['AUDIO'],
+        responseModalities: [Modality.AUDIO],
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: { voiceName: 'Kore' },
@@ -118,18 +118,29 @@ export const generateStoryQuiz = async (storyContext: string): Promise<QuizQuest
 
   try {
     const ai = getAI();
-    const prompt = `Generate 5 multiple choice questions based on this Bible story context: ${storyContext}. 
-    Return a JSON array where each object has:
-    - 'question' (string)
-    - 'options' (array of 4 strings)
-    - 'correctAnswerIndex' (number, 0-3)
-    - 'explanation' (string, short reason why the answer is correct)`;
+    const prompt = `Generate 5 multiple choice questions based on this Bible story context: ${storyContext}.`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
-        responseMimeType: 'application/json'
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              question: { type: Type.STRING },
+              options: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING }
+              },
+              correctAnswerIndex: { type: Type.INTEGER },
+              explanation: { type: Type.STRING }
+            },
+            required: ['question', 'options', 'correctAnswerIndex', 'explanation']
+          }
+        }
       }
     });
 

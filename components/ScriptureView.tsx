@@ -69,8 +69,9 @@ export const ScriptureView: React.FC<ScriptureViewProps> = ({ story }) => {
             <h3 className="text-stone-500 font-sans text-sm uppercase tracking-wider mb-6">{story.reference}</h3>
             
             <div className="prose prose-lg prose-stone font-serif text-stone-800 leading-loose">
-              {/* Simple rendering for now, can be improved with parsing if needed */}
-              <p>{story.text}</p>
+              <p className="first-letter:text-5xl first-letter:font-display first-letter:text-orange-600 first-letter:mr-3 first-letter:float-left first-letter:leading-[0.8]">
+                {story.text}
+              </p>
             </div>
           </div>
         </div>

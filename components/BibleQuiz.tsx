@@ -58,7 +58,7 @@ export const BibleQuiz: React.FC<BibleQuizProps> = ({ story }) => {
 
   if (status === 'idle') {
     return (
-      <section className="py-16 px-4 bg-stone-100 border-t border-stone-200">
+      <section id="quiz" className="py-16 px-4 bg-stone-100 border-t border-stone-200 scroll-mt-20">
         <div className="max-w-2xl mx-auto text-center">
           <div className="bg-white p-8 rounded-2xl shadow-sm border border-stone-200">
             <BrainCircuit className="w-12 h-12 text-orange-500 mx-auto mb-4" />
@@ -80,7 +80,7 @@ export const BibleQuiz: React.FC<BibleQuizProps> = ({ story }) => {
 
   if (status === 'loading') {
     return (
-      <section className="py-16 px-4 bg-stone-100 border-t border-stone-200">
+      <section id="quiz" className="py-16 px-4 bg-stone-100 border-t border-stone-200 scroll-mt-20">
         <div className="max-w-2xl mx-auto text-center">
           <div className="bg-white p-12 rounded-2xl shadow-sm border border-stone-200 flex flex-col items-center">
             <RefreshCw className="w-10 h-10 text-orange-500 animate-spin mb-4" />
@@ -95,7 +95,7 @@ export const BibleQuiz: React.FC<BibleQuizProps> = ({ story }) => {
   if (status === 'active') {
     const question = questions[currentQuestionIdx];
     return (
-      <section className="py-16 px-4 bg-stone-100 border-t border-stone-200">
+      <section id="quiz" className="py-16 px-4 bg-stone-100 border-t border-stone-200 scroll-mt-20">
         <div className="max-w-3xl mx-auto">
           <div className="bg-white rounded-2xl shadow-lg border border-stone-200 overflow-hidden">
             {/* Progress Bar */}
@@ -159,7 +159,7 @@ export const BibleQuiz: React.FC<BibleQuizProps> = ({ story }) => {
   const percentage = Math.round((score / questions.length) * 100);
 
   return (
-    <section className="py-16 px-4 bg-stone-100 border-t border-stone-200">
+    <section id="quiz" className="py-16 px-4 bg-stone-100 border-t border-stone-200 scroll-mt-20">
       <div className="max-w-3xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl border border-stone-200 overflow-hidden">
           <div className="bg-stone-900 text-white p-8 text-center relative overflow-hidden">
