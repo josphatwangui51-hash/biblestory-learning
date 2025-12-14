@@ -3,6 +3,7 @@ import { Heart, Mail, MessageCircle, Book } from 'lucide-react';
 import { Hero } from './components/Hero';
 import { ScriptureView } from './components/ScriptureView';
 import { AICompanion } from './components/AICompanion';
+import { BibleQuiz } from './components/BibleQuiz';
 import { NotesWidget } from './components/NotesWidget';
 import { NotesProvider } from './contexts/NotesContext';
 import { notifyVisit } from './services/notificationService';
@@ -23,7 +24,11 @@ const App: React.FC = () => {
         <Hero story={currentStory} />
         <ScriptureView story={currentStory} />
         {/* Key forces remount when story changes to reset chat state */}
-        <AICompanion key={currentStory.id} story={currentStory} />
+        <AICompanion key={`chat-${currentStory.id}`} story={currentStory} />
+        
+        {/* Bible Quiz Section */}
+        <BibleQuiz key={`quiz-${currentStory.id}`} story={currentStory} />
+
         <NotesWidget />
         
         {/* Story Selector Section */}

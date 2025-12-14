@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { QuizQuestion } from "../types";
 
 // Helper to get AI instance with latest key from environment
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
@@ -105,5 +106,39 @@ export const generateSceneVideo = async (prompt: string): Promise<string | null>
        await (window as any).aistudio.openSelectKey();
     }
     return null;
+  }
+};
+
+export const generateStoryQuiz = async (storyContext: string): Promise<QuizQuestion[]> => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    console.error("API Key missing for Quiz");
+    return [];
+  }
+
+  try {
+    const ai = getAI();
+    const prompt = `Generate 5 multiple choice questions based on this Bible story context: ${storyContext}. 
+    Return a JSON array where each object has:
+    - 'question' (string)
+    - 'options' (array of 4 strings)
+    - 'correctAnswerIndex' (number, 0-3)
+    - 'explanation' (string, short reason why the answer is correct)`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json'
+      }
+    });
+
+    if (response.text) {
+      return JSON.parse(response.text) as QuizQuestion[];
+    }
+    return [];
+  } catch (error) {
+    console.error("Error generating quiz:", error);
+    return [];
   }
 };

@@ -1,12 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { generateReflectiveContent, generateSpeech } from '../services/geminiService';
+import { generateReflectiveContent, generateSpeech, generateSceneVideo } from '../services/geminiService';
 import { playAudioContent } from '../utils/audioPlayer';
-import { Sparkles, Send, BookOpen, History, Heart, Lightbulb, Volume2, Loader2, BookmarkPlus } from 'lucide-react';
+import { Sparkles, Send, BookOpen, History, Heart, Lightbulb, Volume2, Loader2, BookmarkPlus, Film, X } from 'lucide-react';
 import { ChatMessage, StoryData } from '../types';
 import { useNotes } from '../contexts/NotesContext';
 
 interface AICompanionProps {
   story: StoryData;
+}
+
+interface VisualizationState {
+  text: string;
+  videoUrl: string | null;
+  audioData: string | null;
+  isLoading: boolean;
+  loadingStep: string;
 }
 
 export const AICompanion: React.FC<AICompanionProps> = ({ story }) => {
@@ -16,6 +24,7 @@ export const AICompanion: React.FC<AICompanionProps> = ({ story }) => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [speakingId, setSpeakingId] = useState<number | null>(null);
+  const [visualization, setVisualization] = useState<VisualizationState | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const { addNote } = useNotes();
@@ -53,6 +62,41 @@ export const AICompanion: React.FC<AICompanionProps> = ({ story }) => {
     }
   };
 
+  const handleVisualize = async (text: string) => {
+    setVisualization({
+      text,
+      videoUrl: null,
+      audioData: null,
+      isLoading: true,
+      loadingStep: 'Dreaming up the scene...'
+    });
+
+    try {
+        // Create a visual prompt based on the story and the specific insight
+        const visualPrompt = `Cinematic, photorealistic biblical scene. Theme: ${story.titlePrefix} ${story.titleHighlight}. Mood: ${story.theme}. Visual context: ${text.slice(0, 100)}. 4k, dramatic lighting.`;
+        
+        const videoUrl = await generateSceneVideo(visualPrompt);
+        
+        if (videoUrl) {
+            setVisualization(prev => prev ? { ...prev, videoUrl, loadingStep: 'Preparing narration...' } : null);
+            
+            const audioData = await generateSpeech(text);
+            
+            setVisualization(prev => prev ? { ...prev, audioData, isLoading: false } : null);
+            
+            if (audioData) {
+                await playAudioContent(audioData);
+            }
+        } else {
+            setVisualization(null);
+            // Optionally handle error notification here
+        }
+    } catch (error) {
+        console.error(error);
+        setVisualization(null);
+    }
+  };
+
   const handleSaveNote = (text: string) => {
     addNote(text, 'AI Insight');
   };
@@ -69,7 +113,68 @@ export const AICompanion: React.FC<AICompanionProps> = ({ story }) => {
   );
 
   return (
-    <section className="py-24 px-4 bg-white">
+    <section className="py-24 px-4 bg-white relative">
+      
+      {/* Visualization Modal */}
+      {visualization && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/95 backdrop-blur-sm p-4 animate-fade-in">
+            <button 
+                onClick={() => setVisualization(null)}
+                className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors"
+                aria-label="Close visualization"
+            >
+                <X className="w-8 h-8" />
+            </button>
+            
+            <div className="max-w-6xl w-full bg-black rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row border border-stone-800 h-[80vh] md:h-[70vh]">
+                {/* Video Container */}
+                <div className="relative md:w-2/3 bg-stone-900 flex items-center justify-center h-1/2 md:h-full">
+                    {visualization.videoUrl ? (
+                        <video 
+                            src={visualization.videoUrl} 
+                            autoPlay 
+                            loop 
+                            muted 
+                            playsInline
+                            className="w-full h-full object-cover animate-fade-in"
+                        />
+                    ) : (
+                        <div className="text-center p-8">
+                            <Loader2 className="w-12 h-12 text-orange-500 animate-spin mx-auto mb-6" />
+                            <p className="text-orange-200 font-display text-xl animate-pulse">{visualization.loadingStep}</p>
+                            <p className="text-stone-500 text-sm mt-4 max-w-xs mx-auto">Generating a unique cinematic background for this insight using Veo...</p>
+                        </div>
+                    )}
+                </div>
+                
+                {/* Text/Controls Container */}
+                <div className="p-8 md:w-1/3 flex flex-col bg-stone-900 border-l border-stone-800 h-1/2 md:h-full">
+                    <div className="flex items-center gap-2 mb-6 text-orange-500 shrink-0">
+                        <Sparkles className="w-5 h-5" />
+                        <span className="font-display tracking-widest text-sm uppercase">AI Insight</span>
+                    </div>
+                    
+                    <div className="flex-1 overflow-y-auto pr-2">
+                        <p className="text-stone-300 font-serif leading-relaxed whitespace-pre-wrap text-sm md:text-base">
+                            {visualization.text}
+                        </p>
+                    </div>
+
+                    {visualization.audioData && !visualization.isLoading && (
+                        <div className="mt-6 pt-6 border-t border-stone-800 shrink-0">
+                             <button 
+                                onClick={() => playAudioContent(visualization.audioData!)}
+                                className="w-full flex items-center justify-center gap-2 py-3 bg-stone-800 hover:bg-stone-700 text-white rounded-lg transition-colors font-sans text-sm tracking-wide uppercase"
+                             >
+                                <Volume2 className="w-4 h-4" /> Replay Narration
+                             </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+      )}
+
       <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Context / Instructions */}
@@ -114,18 +219,34 @@ export const AICompanion: React.FC<AICompanionProps> = ({ story }) => {
                   ))}
 
                   {msg.role === 'model' && (
-                    <div className="absolute -bottom-8 left-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute -bottom-10 left-0 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white p-1 rounded-full shadow-sm border border-stone-100">
                         <button 
                         onClick={() => handleSpeak(msg.text, idx)}
                         disabled={speakingId !== null}
-                        className={`p-1.5 rounded-full hover:bg-orange-50 transition-colors ${speakingId === idx ? 'text-orange-500' : 'text-stone-400 hover:text-orange-500'}`}
+                        className={`p-2 rounded-full hover:bg-orange-50 transition-colors ${speakingId === idx ? 'text-orange-500' : 'text-stone-400 hover:text-orange-500'}`}
                         aria-label="Read aloud"
+                        title="Read Aloud"
                         >
                         {speakingId === idx ? <Loader2 className="w-4 h-4 animate-spin" /> : <Volume2 className="w-4 h-4" />}
                         </button>
+                        
+                        <div className="w-px bg-stone-200 my-1"></div>
+
+                        <button 
+                        onClick={() => handleVisualize(msg.text)}
+                        disabled={visualization !== null}
+                        className="p-2 rounded-full text-stone-400 hover:text-orange-500 hover:bg-orange-50 transition-colors"
+                        aria-label="Visualize"
+                        title="Visualize & Narrate"
+                        >
+                        <Film className="w-4 h-4" />
+                        </button>
+
+                        <div className="w-px bg-stone-200 my-1"></div>
+                        
                         <button 
                         onClick={() => handleSaveNote(msg.text)}
-                        className="p-1.5 rounded-full text-stone-400 hover:text-orange-500 hover:bg-orange-50 transition-colors"
+                        className="p-2 rounded-full text-stone-400 hover:text-orange-500 hover:bg-orange-50 transition-colors"
                         aria-label="Save to notes"
                         title="Save to Notes"
                         >

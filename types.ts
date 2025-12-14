@@ -35,3 +35,10 @@ export interface StoryData {
   backgroundImage: string;
   aiContext: string;
 }
+
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correctAnswerIndex: number; // 0-3
+  explanation: string;
+}
